@@ -170,13 +170,45 @@
     // grid-template-rows 강제 해제 (Squarespace가 고정 행 높이 설정)
     wrapper.style.setProperty('grid-template-rows', 'none', 'important');
 
-    // 하단 푸터
-    if (!wrapper.querySelector('.ondamlab-footer')) {
-      var footerEl = document.createElement('div');
-      footerEl.className = 'ondamlab-footer';
-      footerEl.innerHTML = '<p>랩온담은 스마스월드의 AI 콘텐츠 실험 공간입니다.</p>' +
-        '<p><a href="/trendnews/how-we-publish">How We Publish</a> · <a href="mailto:contact@smath.world">contact@smath.world</a></p>';
-      wrapper.appendChild(footerEl);
+    // 하단 페이지네이션 (숫자)
+    if (!wrapper.querySelector('.feed-pagination')) {
+      var sqPag = document.querySelector('.blog-list-pagination');
+      if (sqPag) sqPag.style.display = 'none';
+
+      var pagEl = document.createElement('div');
+      pagEl.className = 'feed-pagination';
+      wrapper.appendChild(pagEl);
+
+      // JSON API에서 전체 포스트 수 + 페이지 정보
+      fetch(window.location.pathname + '?format=json' + (window.location.search ? '&' + window.location.search.substring(1) : ''))
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          var pag = d.pagination || {};
+          var coll = d.collection || {};
+          var total = coll.itemCount || 0;
+          var pageSize = pag.pageSize || 20;
+          var totalPages = Math.ceil(total / pageSize);
+          if (totalPages <= 1) return;
+
+          // 현재 페이지 번호 추정: offset → 페이지 매핑
+          // Squarespace offset은 timestamp 기반이라 정확한 페이지 번호 산출 어려움
+          // 대신 nextPage/prevPage 존재 여부로 현재 위치 추정
+          var hasNext = pag.nextPage || false;
+          var nextUrl = pag.nextPageUrl ? pag.nextPageUrl : '';
+          var hasPrev = window.location.search.includes('offset');
+
+          // 이전/다음 + 페이지 수 표시
+          var html = '';
+          if (hasPrev) {
+            html += '<a href="' + window.location.pathname + '" class="page-btn">&larr; 처음</a>';
+          }
+          html += '<span class="page-info">' + totalPages + '페이지 중</span>';
+          if (hasNext && nextUrl) {
+            html += '<a href="' + nextUrl + '" class="page-btn">다음 &rarr;</a>';
+          }
+          pagEl.innerHTML = html;
+        })
+        .catch(function() {});
     }
   }
 
