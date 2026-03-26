@@ -6,50 +6,7 @@
   }
   function init() {
     
-/* Nav: Podcast 링크 추가 */
-(function() {
-  function addPodcastLink() {
-    var navWrappers = document.querySelectorAll('.header-nav-wrapper');
-    navWrappers.forEach(function(nav) {
-      if (nav.querySelector('[data-podcast-link]')) return;
-      var items = nav.querySelectorAll('.header-nav-item--collection');
-      var lastItem = items[items.length - 1];
-      if (!lastItem) return;
-      var li = lastItem.cloneNode(true);
-      li.setAttribute('data-podcast-link', '1');
-      var a = li.querySelector('a');
-      if (a) {
-        a.href = 'https://podcast.smath.world/';
-        a.textContent = 'Podcast';
-        a.removeAttribute('aria-current');
-        a.classList.remove('header-nav-item--active');
-      }
-      lastItem.parentNode.insertBefore(li, lastItem);
-    });
-    /* 모바일 메뉴에도 추가 */
-    var mobileNavs = document.querySelectorAll('.header-menu-nav-wrapper');
-    mobileNavs.forEach(function(nav) {
-      if (nav.querySelector('[data-podcast-link]')) return;
-      var items = nav.querySelectorAll('.header-menu-nav-item');
-      var lastItem = items[items.length - 1];
-      if (!lastItem) return;
-      var li = lastItem.cloneNode(true);
-      li.setAttribute('data-podcast-link', '1');
-      var a = li.querySelector('a');
-      if (a) {
-        a.href = 'https://podcast.smath.world/';
-        a.textContent = 'Podcast';
-        a.removeAttribute('aria-current');
-      }
-      lastItem.parentNode.insertBefore(li, lastItem);
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', addPodcastLink);
-  } else {
-    addPodcastLink();
-  }
-})();
+/* Nav: Podcast 링크 — 제거됨 (Squarespace 네비바에서 직접 관리) */
 
 
 
