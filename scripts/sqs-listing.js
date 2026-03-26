@@ -78,16 +78,7 @@
   function transformCards() {
     var articles = wrapper.querySelectorAll('article.blog-single-column--container');
 
-    // 소개 배너
-    if (articles.length > 0 && !wrapper.querySelector('.feed-intro-banner')) {
-      var banner = document.createElement('div');
-      banner.className = 'feed-intro-banner';
-      banner.innerHTML = '<h2>랩온담 AI 트렌드 브리핑</h2>' +
-        '<p>랩온담이 매일 정리하는 AI·테크 이슈 브리핑.<br>' +
-        '중요한 변화와 시장 신호를 빠르게 읽을 수 있도록 정리합니다.</p>' +
-        '<p style="margin-top:10px"><a href="/trendnews/how-we-publish">How We Publish →</a></p>';
-      wrapper.insertBefore(banner, articles[0]);
-    }
+    // 소개 배너 — 제거됨 (Squarespace 헤더 섹션으로 대체)
 
     articles.forEach(function(art) {
       var titleEl = art.querySelector('h1.blog-title a');
