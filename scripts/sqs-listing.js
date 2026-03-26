@@ -179,36 +179,56 @@
       pagEl.className = 'feed-pagination';
       wrapper.appendChild(pagEl);
 
-      // JSON API에서 전체 포스트 수 + 페이지 정보
-      fetch(window.location.pathname + '?format=json' + (window.location.search ? '&' + window.location.search.substring(1) : ''))
-        .then(function(r) { return r.json(); })
-        .then(function(d) {
-          var pag = d.pagination || {};
-          var coll = d.collection || {};
-          var total = coll.itemCount || 0;
-          var pageSize = pag.pageSize || 20;
-          var totalPages = Math.ceil(total / pageSize);
+      // 모든 페이지의 offset을 수집하여 숫자 페이지네이션 생성
+      (async function() {
+        try {
+          var basePath = window.location.pathname;
+          var currentOffset = new URLSearchParams(window.location.search).get('offset') || '';
+          var offsets = [''];  // 1페이지 = offset 없음
+          var url = basePath + '?format=json';
+
+          // 모든 페이지의 offset 수집
+          while (true) {
+            var r = await fetch(url);
+            var d = await r.json();
+            var pag = d.pagination || {};
+            if (pag.nextPage && pag.nextPageUrl) {
+              var nextOffset = new URLSearchParams(pag.nextPageUrl.split('?')[1] || '').get('offset') || '';
+              if (nextOffset) offsets.push(nextOffset);
+              url = basePath + '?format=json&offset=' + nextOffset;
+            } else {
+              break;
+            }
+          }
+
+          var totalPages = offsets.length;
           if (totalPages <= 1) return;
 
-          // 현재 페이지 번호 추정: offset → 페이지 매핑
-          // Squarespace offset은 timestamp 기반이라 정확한 페이지 번호 산출 어려움
-          // 대신 nextPage/prevPage 존재 여부로 현재 위치 추정
-          var hasNext = pag.nextPage || false;
-          var nextUrl = pag.nextPageUrl ? pag.nextPageUrl : '';
-          var hasPrev = window.location.search.includes('offset');
-
-          // 이전/다음 + 페이지 수 표시
-          var html = '';
-          if (hasPrev) {
-            html += '<a href="' + window.location.pathname + '" class="page-btn">&larr; 처음</a>';
+          // 현재 페이지 번호
+          var currentPage = 0;
+          for (var i = 0; i < offsets.length; i++) {
+            if (offsets[i] === currentOffset) { currentPage = i; break; }
           }
-          html += '<span class="page-info">' + totalPages + '페이지 중</span>';
-          if (hasNext && nextUrl) {
-            html += '<a href="' + nextUrl + '" class="page-btn">다음 &rarr;</a>';
+
+          var html = '';
+          // 이전 버튼
+          if (currentPage > 0) {
+            var prevHref = offsets[currentPage - 1] ? basePath + '?offset=' + offsets[currentPage - 1] : basePath;
+            html += '<a href="' + prevHref + '" class="page-btn">&larr; 이전</a>';
+          }
+          // 숫자 버튼
+          for (var p = 0; p < totalPages; p++) {
+            var href = offsets[p] ? basePath + '?offset=' + offsets[p] : basePath;
+            html += '<a href="' + href + '" class="page-btn' + (p === currentPage ? ' active' : '') + '">' + (p + 1) + '</a>';
+          }
+          // 다음 버튼
+          if (currentPage < totalPages - 1) {
+            var nextHref = basePath + '?offset=' + offsets[currentPage + 1];
+            html += '<a href="' + nextHref + '" class="page-btn">다음 &rarr;</a>';
           }
           pagEl.innerHTML = html;
-        })
-        .catch(function() {});
+        } catch(e) {}
+      })();
     }
   }
 
