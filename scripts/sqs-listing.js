@@ -296,22 +296,42 @@
     var ogImg = document.querySelector('meta[property="og:image"]');
     if (ogImg) img = ogImg.getAttribute('content') || '';
   }
+  var isInsight = window.location.pathname.startsWith('/insight');
+  var collectionName = isInsight ? 'AI 심층 분석' : 'AI 트렌드 뉴스';
+  var collectionUrl = isInsight ? 'https://www.smath.world/insight' : 'https://www.smath.world/trendnews';
   var ld = {
     '@context': 'https://schema.org',
-    '@type': 'Article',
+    '@type': 'NewsArticle',
     'headline': title,
     'description': desc,
     'url': window.location.href,
     'inLanguage': 'ko',
-    'author': {'@type': 'Organization', 'name': 'Lab Ondam', 'alternateName': '랩온담'},
-    'publisher': {'@type': 'Organization', 'name': 'SMATh World', 'alternateName': '스마스월드', 'url': 'https://www.smath.world'}
+    'author': {'@type': 'Organization', 'name': 'SMATh World', 'alternateName': '랩온담', 'url': 'https://www.smath.world'},
+    'publisher': {'@type': 'Organization', 'name': 'SMATh World', 'alternateName': '스마스월드', 'url': 'https://www.smath.world', 'logo': {'@type': 'ImageObject', 'url': 'https://www.smath.world/favicon.ico'}},
+    'mainEntityOfPage': {'@type': 'WebPage', '@id': window.location.href},
+    'isAccessibleForFree': true
   };
-  if (dateStr) ld['datePublished'] = dateStr;
+  if (dateStr) { ld['datePublished'] = dateStr; ld['dateModified'] = dateStr; }
   if (img) ld['image'] = img;
   var s = document.createElement('script');
   s.type = 'application/ld+json';
   s.textContent = JSON.stringify(ld);
   document.head.appendChild(s);
+
+  // BreadcrumbList schema
+  var breadcrumb = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    'itemListElement': [
+      {'@type': 'ListItem', 'position': 1, 'name': 'Home', 'item': 'https://www.smath.world'},
+      {'@type': 'ListItem', 'position': 2, 'name': collectionName, 'item': collectionUrl},
+      {'@type': 'ListItem', 'position': 3, 'name': title}
+    ]
+  };
+  var bs = document.createElement('script');
+  bs.type = 'application/ld+json';
+  bs.textContent = JSON.stringify(breadcrumb);
+  document.head.appendChild(bs);
 
   // og:image / twitter:image → 본문 첫 이미지 (히어로)
   if (img && img.indexOf('favicon') === -1) {
@@ -434,15 +454,32 @@
   var contentEl = document.querySelector('.blog-item-content-wrapper');
   if (!contentEl) return;
 
-  fetch('/trend?format=json&limit=50&nocache=' + Date.now())
+  // 현재 페이지의 컬렉션 자동 감지 (/insight 또는 /trendnews)
+  var collection = window.location.pathname.startsWith('/insight') ? '/insight' : '/trendnews';
+  fetch(collection + '?format=json&limit=50&nocache=' + Date.now())
     .then(function(r) { return r.json(); })
     .then(function(data) {
       var items = data.items || [];
       var currentPath = window.location.pathname;
-      // 현재 글 제외, 최근 4개 선택
-      var related = items.filter(function(item) {
+
+      // 현재 글의 태그 추출
+      var currentItem = items.find(function(item) {
+        return item.fullUrl === currentPath || ('/' + collection.replace(/^\//, '') + '/' + item.urlId) === currentPath;
+      });
+      var currentTags = (currentItem && currentItem.tags) ? currentItem.tags.map(function(t) { return t.toLowerCase(); }) : [];
+
+      // 태그 유사도 기반 정렬 + 최근순 폴백
+      var candidates = items.filter(function(item) {
         return item.fullUrl !== currentPath && item.urlId;
-      }).slice(0, 4);
+      });
+      if (currentTags.length > 0) {
+        candidates.forEach(function(item) {
+          var tags = (item.tags || []).map(function(t) { return t.toLowerCase(); });
+          item._score = tags.filter(function(t) { return currentTags.indexOf(t) !== -1; }).length;
+        });
+        candidates.sort(function(a, b) { return (b._score || 0) - (a._score || 0); });
+      }
+      var related = candidates.slice(0, 4);
       if (related.length === 0) return;
 
       var html = '<div style="border-top:2px solid #e5e7eb;margin-top:3em;padding-top:2em">';
@@ -453,7 +490,7 @@
         if (item.assetUrl) thumbUrl = item.assetUrl + '?format=300w';
         var title = item.title || '';
         if (title.length > 35) title = title.substring(0, 35) + '…';
-        html += '<a href="' + (item.fullUrl || '/trendnews/' + item.urlId) + '" style="text-decoration:none;display:flex;gap:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;transition:background 0.2s" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'transparent\'">';
+        html += '<a href="' + (item.fullUrl || collection + '/' + item.urlId) + '" style="text-decoration:none;display:flex;gap:10px;padding:10px;border:1px solid #e5e7eb;border-radius:8px;transition:background 0.2s" onmouseover="this.style.background=\'#f9fafb\'" onmouseout="this.style.background=\'transparent\'">';
         if (thumbUrl) {
           html += '<img src="' + thumbUrl + '" alt="' + title.replace(/"/g, '') + '" style="width:80px;height:56px;object-fit:cover;border-radius:6px;flex-shrink:0" loading="lazy"/>';
         }
