@@ -5,7 +5,33 @@
     init();
   }
   function init() {
-    
+
+/* ── 모바일 오버플로우 수정 (v20260329) ── */
+(function() {
+  var mobileFixCSS = document.createElement('style');
+  mobileFixCSS.textContent = [
+    /* 전체 페이지 수평 스크롤 차단 */
+    'html, body { overflow-x: hidden !important; max-width: 100vw !important; }',
+    /* 헤더 네비 모바일 오버플로우 방지 */
+    '@media (max-width: 700px) {',
+    '  .header-menu, .header-menu-bg, .header-menu-nav, .header-menu-nav-list,',
+    '  .header-menu-nav-folder, .header-menu-nav-folder-content,',
+    '  .header-menu-nav-wrapper {',
+    '    max-width: 100vw !important; overflow-x: hidden !important;',
+    '  }',
+    '  .header-menu-nav-list { flex-wrap: wrap !important; justify-content: center !important; gap: 4px 12px !important; }',
+    '  .header-nav-item { font-size: 12px !important; }',
+    '}',
+    /* card-only-thumb: 상세 페이지에서 수평 스크롤 유발 방지 */
+    '.card-only-thumb { width: 0 !important; height: 0 !important; clip: rect(0,0,0,0) !important; }',
+    '.card-only-thumb img { width: 0 !important; height: 0 !important; }',
+    /* 리스팅 카드 모바일 오버플로우 방지 */
+    'body:not(.view-item) .blog-single-column--wrapper { max-width: 100vw !important; overflow-x: hidden !important; }',
+    'body:not(.view-item) article.blog-single-column--container { max-width: 100% !important; }'
+  ].join('\n');
+  document.head.appendChild(mobileFixCSS);
+})();
+
 /* Nav: Podcast 링크 — 제거됨 (Squarespace 네비바에서 직접 관리) */
 
 
