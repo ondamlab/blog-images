@@ -196,6 +196,13 @@
     // grid-template-rows 강제 해제 (Squarespace가 고정 행 높이 설정)
     wrapper.style.setProperty('grid-template-rows', 'none', 'important');
 
+    // 모바일: grid-template-columns 강제 (Squarespace 인라인 스타일 오버라이드)
+    if (window.innerWidth <= 420) {
+      wrapper.style.setProperty('grid-template-columns', '1fr', 'important');
+    } else if (window.innerWidth <= 700) {
+      wrapper.style.setProperty('grid-template-columns', 'repeat(2, 1fr)', 'important');
+    }
+
     // 하단 페이지네이션 (숫자)
     if (!wrapper.querySelector('.feed-pagination')) {
       var sqPag = document.querySelector('.blog-list-pagination');
